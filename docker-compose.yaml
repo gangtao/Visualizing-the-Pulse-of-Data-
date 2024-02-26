@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  proton:
+    image: ghcr.io/timeplus-io/proton:latest
+    pull_policy: always
+    ports:
+      - "3218:3218"
+      - "8463:8463"
+    volumes:
+    - ./initdb.d:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:3218/proton/ping"]
+      interval: 2s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  carsharing_datagen:
+    image: timeplus/cardemo:latest
+    entrypoint: /bin/sh
+    command: -c "sleep 15 && echo \"$$CONSOLE_CONFIG_FILE\" > /timeplus/sink.yaml;  /timeplus/cardemo --config /timeplus/.cardemo.yaml -f /timeplus/sink.yaml"
+    environment:
+      CONSOLE_CONFIG_FILE: |
+        sinks:
+          - type: proton
+            properties:
+              interval: 200
+              host: proton
+    depends_on:
+      - proton
+
+  benthos:
+    image: jeffail/benthos:latest
+    pull_policy: always
+    command: streams
+    ports:
+    - "4195:4195"
+
+  init-pipeline:
+    image: ghcr.io/timeplus-io/proton:latest
+    command:
+      - sh
+      - -c
+      - |
+        curl http://benthos:4195/streams/test -X POST  -d  @/pipeline/pipeline.json
+    volumes:
+    - ./pipeline:/pipeline
+    depends_on:
+      proton:
+        condition: service_healthy
