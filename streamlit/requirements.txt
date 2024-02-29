@@ -1,0 +1,2 @@
+streamlit==1.29.0
+proton-driver==0.2.10

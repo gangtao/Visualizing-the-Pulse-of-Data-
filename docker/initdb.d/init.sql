@@ -1,11 +1,11 @@
 --  ddl creare stream
 CREATE STREAM IF NOT EXISTS tickers (
     best_ask decimal(10,2),
-    best_ask_size decimal(10,8),
+    best_ask_size decimal(20,8),
     best_bid decimal(10,2),
-    best_bid_size decimal(10,8),
+    best_bid_size decimal(20,8),
     high_24h decimal(10,2),
-    last_size decimal(10,8),
+    last_size decimal(20,8),
     low_24h decimal(10,2),
     open_24h decimal(10,2),
     price decimal(10,2),

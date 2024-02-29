@@ -1,0 +1,12 @@
+.footer {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    background-color: #333;
+    font-size: 12;
+    font-family: 'Courier New', Courier, monospace;
+    color: #d53c97;
+    padding: 10px 20px;
+    text-align: right;
+}
