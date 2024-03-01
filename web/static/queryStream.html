@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizing the Pulse of Data</title>
-    <!-- Add your CSS stylesheets or external CSS links here -->
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Visualizing the Pulse of Data</title>
+	<!-- Add your CSS stylesheets or external CSS links here -->
 	<link rel="stylesheet" href="dist/reset.css">
 	<link rel="stylesheet" href="dist/reveal.css">
 	<link rel="stylesheet" href="dist/theme/black.css">
@@ -12,28 +13,33 @@
 
 	<!-- Theme used for syntax highlighted code -->
 	<link rel="stylesheet" href="rejs/plugin/highlight/monokai.css">
-	<link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/editor/editor.main.min.css">
+	<link rel="stylesheet" data-name="vs/editor/editor.main"
+		href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/editor/editor.main.min.css">
 
 </head>
+
 <body>
-    <!-- Your HTML content goes here -->
-    <div class="reveal">
+	<!-- Your HTML content goes here -->
+	<div class="reveal">
 		<div class="slides">
 			<section data-background-color="#141414">
 				Query Stream
 				<div style="width: 100%;">
-					<div style="width: 50%;float: left; "> 
-						<pre id="code" style="height: 400px;"></pre>
+					<div style="width: 50%;float: left;">
+						<pre id="code" style="height: 300px;"></pre>
+						<button class="button" type="button" id="runButton">Run</button>
+						<button class="button" type="button" id="stopButton">Stop</button>
 					</div>
-					<div style="margin-left: 50%; height: 100px;"> 
-					<pre id="container" style="font-size: 10px;"></pre>
+					<div style="margin-left: 50%; height: 300px; overflow: hidden;">
+						<pre style="font-size: 10px;" id="container"></pre>
+					</div>
 				</div>
 			</section>
 		</div>
 	</div>
-    <a href="/static/liveTable.html" class="footer" >Live Table</a>
+	<a href="/static/liveTable.html" class="footer">Live Table</a>
 
-    <!-- Add your JavaScript code or external script links here -->
+	<!-- Add your JavaScript code or external script links here -->
 	<script src="dist/reveal.js"></script>
 	<script src="plugin/notes/notes.js"></script>
 	<script src="plugin/markdown/markdown.js"></script>
@@ -42,4 +48,5 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
 	<script src="code/queryStream.js"></script>
 </body>
+
 </html>

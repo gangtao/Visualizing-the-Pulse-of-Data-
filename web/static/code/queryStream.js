@@ -4,6 +4,8 @@ Reveal.initialize({
 });
 
 let subscription = null;
+let querySQL = null;
+let editor = null;
 
 // Simulated asynchronous function to fetch stream data
 async function consumeStream(response) {
@@ -42,7 +44,7 @@ async function consumeStream(response) {
 async function processData(data) {
   console.log(data);
   var element = document.getElementById('container');
-  element.textContent =  JSON.stringify(data) + "\n" + element.textContent
+  element.textContent =  JSON.stringify(data, null, 2) + "\n" + element.textContent
 }
 
 // Make the HTTP POST request and create an observable from the stream
@@ -78,24 +80,35 @@ async function renderStream(sql) {
   }
 }
 
-const code = `SELECT * FROM tickers`;
-const template = `renderStream("${code}")`
+let code = `SELECT * \nFROM tickers`;
+let template = `sql = \`${code}\``
 
 function codeDemo(codeContainerId, code) {
-  var editor = monaco.editor.create(document.getElementById(codeContainerId), {
+  editor = monaco.editor.create(document.getElementById(codeContainerId), {
     minimap: {
       enabled: false,
     },
+    fontSize: 20,
+    lineNumbers: "off",
     value: code,
     language: 'sql',
     theme: 'vs-dark',
   });
-  editor.onDidChangeModelContent(function (e) {
-    subscription.unsubscribe();
-    eval(`renderStream("${editor.getValue()}")`);
-  });
-  eval(`renderStream("${code}")`);
 }
+
+document.getElementById('runButton').addEventListener('click', function() {
+  code = editor.getValue()
+  template = `sql = \`${code}\``
+  eval(template);
+  console.log("sql is ", sql);
+  renderStream(sql);
+});
+
+document.getElementById('stopButton').addEventListener('click', function() {
+  subscription.unsubscribe();
+  // STOP query here
+});
+
 
 require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } });
 require(["vs/editor/editor.main"], () => {
