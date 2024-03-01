@@ -7,6 +7,9 @@ let subscription = null;
 let querySQL = null;
 let editor = null;
 
+let controller =null;
+let signal = null;
+
 // Simulated asynchronous function to fetch stream data
 async function consumeStream(response) {
   const reader = response.body.getReader();
@@ -42,7 +45,6 @@ async function consumeStream(response) {
 
 // Function to process data
 async function processData(data) {
-  console.log(data);
   var element = document.getElementById('container');
   element.textContent =  JSON.stringify(data, null, 2) + "\n" + element.textContent
 }
@@ -56,7 +58,8 @@ async function fetchStreamObservable(sql) {
     body: JSON.stringify(data),
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    signal: signal
   });
 
   if (!response.ok) {
@@ -67,7 +70,6 @@ async function fetchStreamObservable(sql) {
 
 // Function to render stream data
 async function renderStream(sql) {
-  console.log("query : " + sql);
   try {
     const observable = await fetchStreamObservable(sql);
     subscription = observable.subscribe(
@@ -100,13 +102,14 @@ document.getElementById('runButton').addEventListener('click', function() {
   code = editor.getValue()
   template = `sql = \`${code}\``
   eval(template);
-  console.log("sql is ", sql);
+  controller = new AbortController();
+  signal = controller.signal;
   renderStream(sql);
 });
 
 document.getElementById('stopButton').addEventListener('click', function() {
   subscription.unsubscribe();
-  // STOP query here
+  controller.abort();
 });
 
 

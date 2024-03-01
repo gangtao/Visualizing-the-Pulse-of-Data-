@@ -5,6 +5,10 @@ Reveal.initialize({
 
 let subscription = null;
 let chart = null;
+let querySQL = null;
+let editor = null;
+let controller = null;
+let signal = null;
 
 // Simulated asynchronous function to fetch stream data
 async function consumeStream(response) {
@@ -19,7 +23,8 @@ async function consumeStream(response) {
           const { done, value } = await reader.read();
           if (done) {
             if (partialLine) {
-              observer.next(JSON.parse(partialLine));
+              data = [JSON.parse(partialLine), ...data];
+              observer.next(data);
             }
             observer.complete();
             break;
@@ -29,7 +34,11 @@ async function consumeStream(response) {
           const lines = chunk.split('\n');
 
           for (let i = 0; i < lines.length - 1; i++) {
-            data = [JSON.parse(lines[i]), ...data];
+            data = [...data, JSON.parse(lines[i])]; // new data at the end
+            // limit the data size to 1000
+            if (data.length > 1000) {
+              data.splice(0, data.length - 1000);
+            }
             observer.next(data);
           }
           partialLine = lines[lines.length - 1];
@@ -42,21 +51,23 @@ async function consumeStream(response) {
 }
 
 function drawTable(data) {
-  console.log(data);
-  // Instantiate a new chart.
-  chart = new G2.Chart({
-    container: 'container',
-  });
-  
-  // Specify visualization.
-  chart
-    .line()                   
-    .data(data)                   
-    .encode('x', '_tp_time')         
-    .encode('y', 'price')
-  
-  // Render visualization.
-  chart.render();
+  if (chart == null) {
+    chart = new G2.Chart({
+      container: 'container'
+    });
+    chart.theme({ type: 'classicDark' });
+
+    chart
+      .line()
+      .data(data)
+      .encode('x', 'time')
+      .encode('y', 'price')
+      .animate(false);
+      
+    chart.render();
+  } else {
+    chart.changeData(data);
+  }
 }
 
 // Function to process data
@@ -86,7 +97,6 @@ async function fetchStreamObservable(sql) {
 
 // Function to render stream data
 async function renderStream(sql) {
-  console.log("query : " + sql);
   try {
     const observable = await fetchStreamObservable(sql);
     subscription = observable.subscribe(
@@ -99,28 +109,48 @@ async function renderStream(sql) {
   }
 }
 
-const code = `SELECT * FROM tickers WHERE product_id = 'BTC-USD'`;
-const template = `renderStream("${code}")`
+let code = `SELECT * 
+FROM tickers 
+WHERE product_id = 'BTC-USD' 
+AND _tp_time > now() -5s`;
+
+let template = `sql = \`${code}\``;
 
 function codeDemo(codeContainerId, code) {
-  var editor = monaco.editor.create(document.getElementById(codeContainerId), {
+  editor = monaco.editor.create(document.getElementById(codeContainerId), {
     minimap: {
       enabled: false,
     },
     value: code,
+    fontSize: 20,
+    lineNumbers: "off",
     language: 'sql',
     theme: 'vs-dark',
   });
-  editor.onDidChangeModelContent(function (e) {
-    subscription.unsubscribe();
-    eval(`renderStream("${editor.getValue()}")`);
-  });
-  eval(`renderStream("${code}")`);
 }
+
+document.getElementById('runButton').addEventListener('click', function () {
+  if (subscription != null){
+    subscription.unsubscribe();
+    controller.abort();
+  }
+
+  code = editor.getValue()
+  template = `sql = \`${code}\``
+  eval(template);
+  controller = new AbortController();
+  signal = controller.signal;
+  renderStream(sql);
+});
+
+document.getElementById('stopButton').addEventListener('click', function () {
+  subscription.unsubscribe();
+  controller.abort();
+});
+
 
 require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } });
 require(["vs/editor/editor.main"], () => {
   codeDemo("code", code);
-  drawTable();
 });
 
