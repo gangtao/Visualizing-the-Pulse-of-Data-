@@ -15,6 +15,11 @@ from proton_driver import client
 from .utils.logging import getLogger
 logger = getLogger()
 
+global_queries = []
+running = True
+
+app = FastAPI()
+
 class QueryRequest(BaseModel):
     sql: str
 
@@ -40,15 +45,24 @@ class Query():
 
     def run(self):
         logger.info(f'run sql {self.sql}')
+        global running
         try:
             rows = self.client.execute_iter(self.sql, with_column_types=True)
             header = next(rows)
             self.header = header
             for row in rows:
-                with self.lock:
-                    if self.terminate_flag.is_set():
+                while True:
+                    if self.lock.acquire(timeout = 1):
+                        if self.terminate_flag.is_set():
+                            self.lock.release()
+                            break
+                        self.queue.put(row)
+                        self.lock.release()
                         break
-                    self.queue.put(row)
+                    else:
+                        if not running:
+                            break
+
         except Exception as e:
             logger.warning(f'failed to get query result {e}')
             self.error = True
@@ -58,14 +72,19 @@ class Query():
 
     def pull(self):
         result = []
-        with self.lock:
+        if self.lock.acquire(timeout = 1):
             while not self.queue.empty():
                 m = self.queue.get()
                 result.append(m)
+            self.lock.release()
         return result
 
     async def get_header(self):
+        global running
+
         while self.header is None:
+            if not running:
+                return None
             if self.is_error():
                 return None
             await asyncio.sleep(1)
@@ -84,11 +103,6 @@ class Query():
 
     def is_error(self):
         return self.error
-
-global_queries = []
-running = True
-
-app = FastAPI()
 
 def stop_server(*args):
     global running
