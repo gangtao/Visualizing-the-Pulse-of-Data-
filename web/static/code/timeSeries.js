@@ -3,12 +3,16 @@ Reveal.initialize({
   plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
 });
 
+const max_data_point = 10000;
+
 let subscription = null;
 let chart = null;
 let querySQL = null;
 let editor = null;
+let chartEditor = null;
 let controller = null;
 let signal = null;
+let chartCode = null;
 
 // Simulated asynchronous function to fetch stream data
 async function consumeStream(response) {
@@ -36,8 +40,8 @@ async function consumeStream(response) {
           for (let i = 0; i < lines.length - 1; i++) {
             data = [...data, JSON.parse(lines[i])]; // new data at the end
             // limit the data size to 1000
-            if (data.length > 1000) {
-              data.splice(0, data.length - 1000);
+            if (data.length > max_data_point) {
+              data.splice(0, data.length - max_data_point);
             }
             observer.next(data);
           }
@@ -57,12 +61,7 @@ function drawTable(data) {
     });
     chart.theme({ type: 'classicDark' });
 
-    chart
-      .line()
-      .data(data)
-      .encode('x', 'time')
-      .encode('y', 'price')
-      .animate(false);
+    eval(chartCode);
       
     chart.render();
   } else {
@@ -109,15 +108,23 @@ async function renderStream(sql) {
   }
 }
 
-let code = `SELECT * 
+let code = `SELECT time, price 
 FROM tickers 
 WHERE product_id = 'BTC-USD' 
 AND _tp_time > now() -5s`;
 
+chartCode = `chart
+.line()
+.data(data)
+.encode('x', 'time')
+.encode('y', 'price')
+.animate(false);
+`;
+
 let template = `sql = \`${code}\``;
 
-function codeDemo(codeContainerId, code) {
-  editor = monaco.editor.create(document.getElementById(codeContainerId), {
+function codeDemo() {
+  editor = monaco.editor.create(document.getElementById("sqlCode"), {
     minimap: {
       enabled: false,
     },
@@ -126,6 +133,19 @@ function codeDemo(codeContainerId, code) {
     lineNumbers: "off",
     language: 'sql',
     theme: 'vs-dark',
+    scrollBeyondLastLine: false,
+  });
+
+  chartEditor = monaco.editor.create(document.getElementById("chartCode"), {
+    minimap: {
+      enabled: false,
+    },
+    value: chartCode,
+    fontSize: 20,
+    lineNumbers: "off",
+    language: 'javascript',
+    theme: 'vs-dark',
+    scrollBeyondLastLine: false,
   });
 }
 
@@ -133,10 +153,12 @@ document.getElementById('runButton').addEventListener('click', function () {
   if (subscription != null){
     subscription.unsubscribe();
     controller.abort();
+    chart = null;
   }
 
-  code = editor.getValue()
-  template = `sql = \`${code}\``
+  code = editor.getValue();
+  chartCode = chartEditor.getValue();
+  template = `sql = \`${code}\``;
   eval(template);
   controller = new AbortController();
   signal = controller.signal;
@@ -146,11 +168,12 @@ document.getElementById('runButton').addEventListener('click', function () {
 document.getElementById('stopButton').addEventListener('click', function () {
   subscription.unsubscribe();
   controller.abort();
+  chart = null;
 });
 
 
 require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } });
 require(["vs/editor/editor.main"], () => {
-  codeDemo("code", code);
+  codeDemo();
 });
 
