@@ -2,7 +2,7 @@ input:
   label: coinbase
   websocket:
     url:  wss://ws-feed.exchange.coinbase.com
-    open_message: '{"type": "subscribe","product_ids": ["ETH-USD","ETH-EUR"],"channels": ["ticker"]}'
+    open_message: '{"type": "subscribe","product_ids": ["ETH-USD","BTC-USD","LTC-USD","BCH-USD","XRP-USD"],"channels": ["ticker"]}'
     open_message_type: text
 
 output:
