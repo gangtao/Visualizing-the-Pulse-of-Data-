@@ -1,10 +1,13 @@
 import streamlit as st
+
+code = '''import streamlit as st
 import pandas as pd
 import json
 from proton_driver import client
 
 c = client.Client(host='127.0.0.1', port=8463)
-query = '''SELECT
+
+query = \'\'\'SELECT
   window_start, latest(price) AS price
 FROM
   tumble(tickers, 1s)
@@ -12,34 +15,27 @@ WHERE
   (product_id = 'BTC-USD') AND (_tp_time > (now() - 2m))
 GROUP BY
   window_start
-ORDER BY _tp_time with fill step 1s
-'''
+\'\'\'
 
-viz_config_json = '''{
+viz_config_json = \'\'\'{
     "mark": {"type": "line", "tooltip": true},
     "encoding": {
         "x": {"field": "window_start", "type": "quantitative", "timeUnit": "minutesseconds"},
         "y": {"field": "price", "type": "quantitative"}
     }
-}'''
-
-stopped = False
+}\'\'\'
 
 rows = c.execute_iter(query, with_column_types=True)
 header = next(rows)
 first_row = next(rows)
 columns = [f[0] for f in header]
 df = pd.DataFrame([list(first_row)], columns=columns)
-if st.button("stop", type="primary"):
-    stopped = True
 
 viz_config = json.loads(viz_config_json)
 
 with st.empty():
     try:
         for row in rows:
-            if stopped:
-                break
             data = list(row)
             new_row = pd.DataFrame([data], columns=columns)
             df = pd.concat([df, new_row], ignore_index=True)
@@ -54,3 +50,5 @@ with st.empty():
     except Exception as e:
         print(f'failed to read {e}')
         c.disconnect()
+'''
+st.code(code, language='python')
