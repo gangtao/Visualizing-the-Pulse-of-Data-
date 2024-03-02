@@ -55,19 +55,30 @@ async function consumeStream(response) {
 }
 
 function drawTable(data) {
-  // todo key based merge
+  // time based merge
+  const resultTimesMap = {};
+  const timeField = "window_start";
+  for (let i = 0; i< data.length ; i++) {
+    const event = data[i];
+    if (event[timeField] in resultTimesMap) {
+      resultTimesMap[event[timeField]].push(event)
+    } else {
+      resultTimesMap[event[timeField]] = [event]
+    }
+  }
+  let keysArray = Object.keys(resultTimesMap);
+  let maxKey = keysArray.reduce((max, key) => (key > max ? key : max), keysArray[0]);
+  const maxValue = resultTimesMap[maxKey];
   
   if (chart == null) {
     chart = new G2.Chart({
       container: 'container'
     });
     chart.theme({ type: 'classicDark' });
-
     eval(chartCode);
-      
     chart.render();
   } else {
-    chart.changeData(data);
+    chart.changeData(maxValue);
   }
 }
 
@@ -110,14 +121,17 @@ async function renderStream(sql) {
   }
 }
 
-let code = `SELECT product_id, price 
-FROM tickers`;
+let code = `SELECT window_start,
+count(*) as count, product_id 
+FROM tumble(tickers, 1s)
+GROUP by window_start, product_id
+`;
 
 chartCode = `chart
 .interval()
 .data(data)
 .encode('x', 'product_id')
-.encode('y', 'price')
+.encode('y', 'count')
 .animate(false);
 `;
 
