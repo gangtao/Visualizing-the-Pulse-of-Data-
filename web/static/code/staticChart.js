@@ -36,7 +36,6 @@ function codeDemo(codeContainerId, code) {
     theme: 'vs-dark',
   });
   editor.onDidChangeModelContent(function (e) {
-    stopReadingHandler();
     eval(editor.getValue());
   });
   eval(code);

@@ -31,6 +31,8 @@ if st.button("stop", type="primary"):
 
 viz_config = json.loads(viz_config_json)
 
+st.code(query, language='sql')
+st.code(viz_config_json, language='json')
 with st.empty():
     try:
         for row in rows:

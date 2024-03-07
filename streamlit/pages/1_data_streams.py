@@ -16,6 +16,8 @@ first_row = next(rows)
 columns = [f[0] for f in header]
 df = pd.DataFrame([list(first_row)], columns=columns)
 
+st.code(query, language='sql')
+
 with st.empty():
     for row in rows:
         data = list(row)

@@ -3,15 +3,18 @@ import pandas as pd
 import json
 from proton_driver import client
 
+st.set_page_config(layout="wide")
+
 c = client.Client(host='127.0.0.1', port=8463)
 query = '''SELECT
  window_start, product_id, earliest(price) AS open, max(price) AS high, min(price) AS low, latest(price) AS close
 FROM
  tumble(tickers, 5s)
 WHERE
- product_id = 'BTC-USD' and _tp_time > now() - 60s
+ product_id = 'BTC-USD' and _tp_time > now() - 3m
 GROUP BY
  window_start, product_id
+settings force_backfill_in_order=1
 '''
 
 viz_config = '''{
@@ -74,6 +77,9 @@ header = next(rows)
 first_row = next(rows)
 columns = [f[0] for f in header]
 df = pd.DataFrame([list(first_row)], columns=columns)
+
+st.code(query, language='sql')
+st.code(viz_config, language='json')
 with st.empty():
     for row in rows:
         data = list(row)
@@ -85,5 +91,5 @@ with st.empty():
         df['low'] = df['low'].astype('float64')
         df['close'] = df['close'].astype('float64')
 
-        st.vega_lite_chart(df.tail(10), json.loads(viz_config), use_container_width=True)
+        st.vega_lite_chart(df.tail(36), json.loads(viz_config), use_container_width=True)
         #st.table(df)

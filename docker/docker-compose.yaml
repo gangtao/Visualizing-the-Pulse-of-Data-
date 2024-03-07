@@ -37,6 +37,16 @@ services:
     ports:
     - "4195:4195"
 
+  notebook:
+    container_name: notebook
+    image: timeplus/notebook:latest
+    pull_policy: always
+    ports:
+      - "8888:8888"
+    depends_on:
+      proton:
+        condition: service_healthy
+
   init-pipeline:
     image: ghcr.io/timeplus-io/proton:latest
     command:

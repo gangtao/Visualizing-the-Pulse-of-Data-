@@ -111,7 +111,8 @@ async function renderStream(sql) {
 let code = `SELECT time, price 
 FROM tickers 
 WHERE product_id = 'BTC-USD' 
-AND _tp_time > now() -5s`;
+AND _tp_time > now() -5s
+settings force_backfill_in_order=1`;
 
 chartCode = `chart
 .line()

@@ -3,6 +3,8 @@ import pandas as pd
 import json
 from proton_driver import client
 
+st.set_page_config(layout="wide")
+
 c = client.Client(host='127.0.0.1', port=8463)
 query = '''SELECT
   window_start, latest(price) AS price
@@ -33,6 +35,8 @@ if st.button("stop", type="primary"):
 
 viz_config = json.loads(viz_config_json)
 
+st.code(query, language='sql')
+st.code(viz_config_json, language='json')
 with st.empty():
     try:
         for row in rows:
